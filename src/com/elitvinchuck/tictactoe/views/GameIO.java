@@ -125,6 +125,15 @@ public class GameIO {
         System.out.println("    hard - hard ai");
     }
 
+    public static void printSingleWelcome() {
+        System.out.println("Welcome to Tic-Tac-Toe!");
+    }
+
+    public static void getUserReturn() {
+        Scanner scanner = new Scanner(System.in);
+        scanner.nextLine();
+    }
+
     public static String[] processStartCommands() {
         Scanner scanner = new Scanner(System.in);
         System.out.print("Input command: ");
@@ -134,6 +143,24 @@ public class GameIO {
             return processStartCommands();
         }
         return command;
+    }
+
+    public static String processSingleUserStartCommands() {
+        Scanner scanner = new Scanner(System.in);
+        String parameter;
+        do {
+            System.out.print("Choose difficulty (easy, medium, hard): ");
+            parameter = scanner.nextLine();
+            if (!isParameterValid(parameter)) {
+                System.out.println("Bad parameters!");
+                return processSingleUserStartCommands();
+            }
+        } while (!isParameterValid(parameter));
+        return parameter;
+    }
+
+    public static boolean isSingleUser(String[] args) {
+        return args.length > 0 && args[0].equals("single");
     }
 
     private static boolean isCommandValid(String[] command) {
