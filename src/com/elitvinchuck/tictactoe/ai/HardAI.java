@@ -15,7 +15,7 @@ public class HardAI extends MediumAI {
 
     @Override
     public int[] move() {
-        return miniMax(gameController, getCurrentSide(), true)
+        return miniMaxScored(gameController, getCurrentSide(), true, 0)
                 .getCoordinates();
     }
 
@@ -42,6 +42,42 @@ public class HardAI extends MediumAI {
 
             move.setScore(
                     miniMax(gameController.clone(), maximizingSide, !isMaximizing)
+                            .getScore());
+
+            gameController.set(GameController.EMPTY, move.getI(), move.getJ());
+            maxEvaluation = maxEvaluation.max(move);
+            minEvaluation = minEvaluation.min(move);
+        }
+
+        if (isMaximizing) {
+            return maxEvaluation;
+        }
+        return minEvaluation;
+    }
+
+    private Move miniMaxScored(GameController gameController, char maximizingSide, boolean isMaximizing, int depth) {
+        if (gameController.isWon(maximizingSide)) {
+            return new Move(-1, -1, Move.POSITIVE_SCORE - depth);
+        } else if (gameController.isWon(GameController.getOppositeSide(maximizingSide))) {
+            return new Move(-1, -1, Move.NEGATIVE_SCORE + depth);
+        } else if (gameController.areNoMoreTurns()) {
+            return new Move(-1, -1, Move.ZERO);
+        }
+
+        Move maxEvaluation;
+        Move minEvaluation;
+
+        maxEvaluation = new Move(-1, -1, Move.NEGATIVE_IMPOSSIBLE);
+        minEvaluation = new Move(-1, -1, Move.POSITIVE_IMPOSSIBLE);
+
+        char moveSide = isMaximizing ? maximizingSide : GameController.getOppositeSide(maximizingSide);
+
+        Move[] moves = getAvailableMoves(gameController);
+        for (Move move : moves) {
+            gameController.set(moveSide, move.getI(), move.getJ());
+
+            move.setScore(
+                    miniMaxScored(gameController.clone(), maximizingSide, !isMaximizing, depth + 1)
                             .getScore());
 
             gameController.set(GameController.EMPTY, move.getI(), move.getJ());
