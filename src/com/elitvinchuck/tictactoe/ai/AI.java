@@ -6,6 +6,4 @@ public interface AI {
 
     boolean isPlayer();
 
-    String getMoveMessage();
-
 }

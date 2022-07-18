@@ -1,11 +1,16 @@
 package com.elitvinchuck.tictactoe.ai;
 
+import com.elitvinchuck.tictactoe.controllers.GameAIController;
 import com.elitvinchuck.tictactoe.controllers.GameController;
 
 public class MediumAI extends EasyAI {
 
-    public MediumAI(GameController gameController) {
-        super(gameController);
+    private GameController gameController = GameController.getInstance();
+
+    private char side;
+
+    public MediumAI() {
+        super();
     }
 
     @Override
@@ -18,21 +23,12 @@ public class MediumAI extends EasyAI {
         return super.move();
     }
 
-    @Override
-    public String getMoveMessage() {
-        return "Making move level \"medium\"";
-    }
-
-    protected boolean isXTurn() {
-        return gameController.countX() == gameController.countO();
-    }
-
     protected char getCurrentSide() {
-        return isXTurn() ? GameController.X : GameController.O;
+        return GameAIController.getInstance().getCurrentSide();
     }
 
     protected char getOppositeSide() {
-        return isXTurn() ? GameController.O : GameController.X;
+        return GameAIController.getInstance().getOppositeSide();
     }
 
     protected boolean isCellOccupiedBySide(int i, int j, char side) {
@@ -71,7 +67,7 @@ public class MediumAI extends EasyAI {
 
     private boolean canWinInOneMoveHorizontal(char side) {
         boolean win = false;
-        for (int i = 0; GameController.isIndexInBounds(i); i++) {
+        for (int i = 0; gameController.isIndexInBounds(i); i++) {
             win |= canWinInOneMoveHorizontalN(side, i);
         }
         return win;
@@ -85,7 +81,7 @@ public class MediumAI extends EasyAI {
 
     private boolean canWinInOneMoveVertical(char side) {
         boolean win = false;
-        for (int i = 0; GameController.isIndexInBounds(i); i++) {
+        for (int i = 0; gameController.isIndexInBounds(i); i++) {
             win |= canWinInOneMoveVerticalN(side, i);
         }
         return win;
@@ -104,7 +100,7 @@ public class MediumAI extends EasyAI {
     }
 
     private int[] getWinningCoordinatesHorizontal(char side) {
-        for (int i = 0; GameController.isIndexInBounds(i); i++) {
+        for (int i = 0; gameController.isIndexInBounds(i); i++) {
             if (canWinInOneMoveHorizontalN(side, i)) {
                 return getWinningCoordinatesHorizontalN(side, i);
             }
@@ -113,7 +109,7 @@ public class MediumAI extends EasyAI {
     }
 
     private int[] getWinningCoordinatesVertical(char side) {
-        for (int i = 0; GameController.isIndexInBounds(i); i++) {
+        for (int i = 0; gameController.isIndexInBounds(i); i++) {
             if (canWinInOneMoveVerticalN(side, i)) {
                 return getWinningCoordinatesVerticalN(side, i);
             }

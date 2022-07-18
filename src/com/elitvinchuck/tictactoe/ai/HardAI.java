@@ -1,28 +1,25 @@
 package com.elitvinchuck.tictactoe.ai;
 
+import com.elitvinchuck.tictactoe.Constants;
+import com.elitvinchuck.tictactoe.controllers.GameAIController;
 import com.elitvinchuck.tictactoe.controllers.GameController;
 
 public class HardAI extends MediumAI {
 
-    public HardAI(GameController gameController) {
-        super(gameController);
-    }
-
-    @Override
-    public String getMoveMessage() {
-        return "Making move level \"hard\"";
+    public HardAI() {
+        super();
     }
 
     @Override
     public int[] move() {
-        return miniMaxScored(gameController, getCurrentSide(), true, 0)
+        return miniMaxScored(GameController.getInstance(), getCurrentSide(), true, 0)
                 .getCoordinates();
     }
 
     private Move miniMax(GameController gameController, char maximizingSide, boolean isMaximizing) {
-        if (gameController.isWon(maximizingSide)) {
+        if (gameController.hasSideWon(maximizingSide)) {
             return new Move(-1, -1, Move.POSITIVE_SCORE);
-        } else if (gameController.isWon(GameController.getOppositeSide(maximizingSide))) {
+        } else if (gameController.hasSideWon(GameAIController.getOppositeSide(maximizingSide))) {
             return new Move(-1, -1, Move.NEGATIVE_SCORE);
         } else if (gameController.areNoMoreTurns()) {
             return new Move(-1, -1, Move.ZERO);
@@ -34,17 +31,17 @@ public class HardAI extends MediumAI {
         maxEvaluation = new Move(-1, -1, Move.NEGATIVE_IMPOSSIBLE);
         minEvaluation = new Move(-1, -1, Move.POSITIVE_IMPOSSIBLE);
 
-        char moveSide = isMaximizing ? maximizingSide : GameController.getOppositeSide(maximizingSide);
+        char moveSide = isMaximizing ? maximizingSide : GameAIController.getOppositeSide(maximizingSide);
 
         Move[] moves = getAvailableMoves(gameController);
         for (Move move : moves) {
             gameController.set(moveSide, move.getI(), move.getJ());
 
             move.setScore(
-                    miniMax(gameController.clone(), maximizingSide, !isMaximizing)
+                    miniMax(gameController, maximizingSide, !isMaximizing)
                             .getScore());
 
-            gameController.set(GameController.EMPTY, move.getI(), move.getJ());
+            gameController.set(Constants.EMPTY_CELL, move.getI(), move.getJ());
             maxEvaluation = maxEvaluation.max(move);
             minEvaluation = minEvaluation.min(move);
         }
@@ -56,9 +53,9 @@ public class HardAI extends MediumAI {
     }
 
     private Move miniMaxScored(GameController gameController, char maximizingSide, boolean isMaximizing, int depth) {
-        if (gameController.isWon(maximizingSide)) {
+        if (gameController.hasSideWon(maximizingSide)) {
             return new Move(-1, -1, Move.POSITIVE_SCORE - depth);
-        } else if (gameController.isWon(GameController.getOppositeSide(maximizingSide))) {
+        } else if (gameController.hasSideWon(GameAIController.getOppositeSide(maximizingSide))) {
             return new Move(-1, -1, Move.NEGATIVE_SCORE + depth);
         } else if (gameController.areNoMoreTurns()) {
             return new Move(-1, -1, Move.ZERO);
@@ -70,17 +67,17 @@ public class HardAI extends MediumAI {
         maxEvaluation = new Move(-1, -1, Move.NEGATIVE_IMPOSSIBLE);
         minEvaluation = new Move(-1, -1, Move.POSITIVE_IMPOSSIBLE);
 
-        char moveSide = isMaximizing ? maximizingSide : GameController.getOppositeSide(maximizingSide);
+        char moveSide = isMaximizing ? maximizingSide : GameAIController.getOppositeSide(maximizingSide);
 
         Move[] moves = getAvailableMoves(gameController);
         for (Move move : moves) {
             gameController.set(moveSide, move.getI(), move.getJ());
 
             move.setScore(
-                    miniMaxScored(gameController.clone(), maximizingSide, !isMaximizing, depth + 1)
+                    miniMaxScored(gameController, maximizingSide, !isMaximizing, depth + 1)
                             .getScore());
 
-            gameController.set(GameController.EMPTY, move.getI(), move.getJ());
+            gameController.set(Constants.EMPTY_CELL, move.getI(), move.getJ());
             maxEvaluation = maxEvaluation.max(move);
             minEvaluation = minEvaluation.min(move);
         }
@@ -92,13 +89,12 @@ public class HardAI extends MediumAI {
     }
 
     private Move[] getAvailableMoves(GameController gameController) {
-        boolean[][] emptyFields = GameController.areFieldsEmpty(gameController);
-        Move[] moves = new Move[GameController.getNumberOfEmptyFields(gameController)];
+        Move[] moves = new Move[gameController.getNumberOfEmptyCells()];
         int movesIndex = 0;
 
-        for (int i = 0; GameController.isIndexInBounds(i); i++) {
-            for (int j = 0; GameController.isIndexInBounds(j); j++) {
-                if (!emptyFields[i][j]) {
+        for (int i = 0; i < Constants.GRID_LENGTH; i++) {
+            for (int j = 0; j < Constants.GRID_LENGTH; j++) {
+                if (!gameController.isCellOccupied(i, j)) {
                     moves[movesIndex++] = new Move(i, j);
                 }
             }

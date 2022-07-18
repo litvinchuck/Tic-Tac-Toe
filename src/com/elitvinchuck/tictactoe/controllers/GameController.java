@@ -1,73 +1,62 @@
 package com.elitvinchuck.tictactoe.controllers;
 
+import com.elitvinchuck.tictactoe.Constants;
 import com.elitvinchuck.tictactoe.models.GameField;
 
 public class GameController {
 
-    public final static int GRID_LENGTH = 3;
+    private static final GameController self = new GameController();
 
-    public final static char X = 'X';
+    private GameField gameField;
 
-    public final static char O = 'O';
-
-    public final static char EMPTY = '_';
-
-    final static String EMPTY_FIELD = "_________";
-
-    private final GameField gameField;
-
-    public GameController() {
-        this.gameField = new GameField(GRID_LENGTH);
-        populateGrid(EMPTY_FIELD);
+    private GameController() {
+        gameField = new GameField(Constants.GRID_LENGTH);
     }
 
-    public GameController(String gameState) {
-        this();
-        populateGrid(gameState);
+    public static GameController getInstance() {
+        return self;
     }
 
     public boolean isCellOccupied(int i, int j) {
-        return gameField.get(i, j) != EMPTY;
+        return gameField.isIndexInBounds(i)
+                && gameField.isIndexInBounds(j)
+                && !gameField.isCellEmpty(i, j);
     }
 
     public boolean isCellOccupiedBySide(int i, int j, char side) {
-        return gameField.get(i, j) == side;
+        return get(i, j) == side;
     }
 
-    public char get(int i, int j) {
-        return gameField.get(i, j);
+    public boolean isIndexInBounds(int i) {
+        return gameField.isIndexInBounds(i);
     }
 
-    public void set(char side, int i, int j) {
-        gameField.set(side, i, j);
+    public boolean isGameFinished() {
+        return hasXWon() || hasOWon() || areNoMoreTurns();
     }
 
-    public int countX() {
-        return countSide(X);
+    public boolean isDraw() {
+        return !hasXWon() && !hasOWon() && areNoMoreTurns();
     }
 
-    public int countO() {
-        return countSide(O);
+    public boolean hasXWon() {
+        return hasSideWon(Constants.X);
     }
 
-    public String getGameState() {
-        String gameState = new String();
-        for (int i = 0; isIndexInBounds(i); i++) {
-            for (int j = 0; isIndexInBounds(j); j++) {
-                gameState += get(i, j);
-            }
-        }
-        return gameState;
+    public boolean hasOWon() {
+        return hasSideWon(Constants.O);
     }
 
-    @Override
-    public GameController clone() {
-        return new GameController(getGameState());
+    public boolean hasSideWon(char side) {
+        return hasSideWonHorizontal(side) ||
+                hasSideWonVertical(side) ||
+                hasSideWonMainDiagonal(side) ||
+                hasSideWonSecondaryDiagonal(side);
     }
 
     public boolean areNoMoreTurns() {
-        for (int i = 0; GameController.isIndexInBounds(i); i++) {
-            for (int j = 0; GameController.isIndexInBounds(j); j++) {
+        for (int i = 0; gameField.isIndexInBounds(i); i++) {
+            for (int j = 0; gameField.isIndexInBounds(j); j++) {
                 if (!isCellOccupied(i, j)) {
                     return false;
                 }
@@ -76,14 +65,27 @@ public class GameController {
         return true;
     }
 
-    public boolean isWon(char side) {
-        return isWonHorizontal(side) ||
-                isWonVertical(side) ||
-                isWonMainDiagonal(side) ||
-                isWonSecondaryDiagonal(side);
+    public char get(int i, int j) {
+        return gameField.get(i, j);
     }
 
-    private boolean isWonHorizontalN(char side, int n) {
+    public int getNumberOfEmptyCells() {
+        int numberOfEmptyCells = 0;
+        for (int i = 0; i < gameField.gridLength; i++) {
+            for (int j = 0; j < gameField.gridLength; j++) {
+                if (gameField.isCellEmpty(i, j)) {
+                    numberOfEmptyCells += 1;
+                }
+            }
+        }
+        return numberOfEmptyCells;
+    }
+
+    public void set(char side, int i, int j) {
+        gameField.set(side, i, j);
+    }
+
+    private boolean hasSideWonHorizontalN(char side, int n) {
         for (int i = 0; isIndexInBounds(i); i++) {
             if (get(i, n) != side) {
                 return false;
@@ -92,7 +94,7 @@ public class GameController {
         return true;
     }
 
-    private boolean isWonVerticalN(char side, int n) {
+    private boolean hasSideWonVerticalN(char side, int n) {
         for (int i = 0; isIndexInBounds(i); i++) {
             if (get(n, i) != side) {
                 return false;
@@ -101,23 +103,23 @@ public class GameController {
         return true;
     }
 
-    private boolean isWonHorizontal(char side) {
+    private boolean hasSideWonHorizontal(char side) {
         boolean win = false;
         for (int i = 0; isIndexInBounds(i); i++) {
-            win |= isWonHorizontalN(side, i);
+            win |= hasSideWonHorizontalN(side, i);
         }
         return win;
     }
 
-    private boolean isWonVertical(char side) {
+    private boolean hasSideWonVertical(char side) {
         boolean win = false;
         for (int i = 0; isIndexInBounds(i); i++) {
-            win |= isWonVerticalN(side, i);
+            win |= hasSideWonVerticalN(side, i);
         }
         return win;
     }
 
-    private boolean isWonMainDiagonal(char side) {
+    private boolean hasSideWonMainDiagonal(char side) {
         for (int i = 0; isIndexInBounds(i); i++) {
             if (get(i, i) != side) {
                 return false;
@@ -126,80 +128,13 @@ public class GameController {
         return true;
     }
 
-    private boolean isWonSecondaryDiagonal(char side) {
+    private boolean hasSideWonSecondaryDiagonal(char side) {
         for (int i = 0; isIndexInBounds(i); i++) {
-            if (get(i, GameController.GRID_LENGTH - i - 1) != side) {
+            if (get(i, Constants.GRID_LENGTH - i - 1) != side) {
                 return false;
             }
         }
         return true;
-    }
-
-    private int countSide(char side) {
-        int counter = 0;
-        for (int i = 0; isIndexInBounds(i); i++) {
-            for (int j = 0; isIndexInBounds(j); j++) {
-                if (get(i, j) == side) {
-                    counter += 1;
-                }
-            }
-        }
-        return counter;
-    }
-
-    private void populateGrid(String gameState) {
-        for (int i = 0; gameField.isIndexInBounds(i); i++) {
-            for (int j = 0; gameField.isIndexInBounds(j); j++) {
-                set(gameState.charAt(i * gameField.gridLength + j), i, j);
-            }
-        }
-    }
-
-    public static boolean isXTurn(String gameString) {
-        int countX = 0;
-        int countO = 0;
-        for (int i = 0; i < gameString.length(); i++) {
-            if (gameString.charAt(i) == X) {
-                countX += 1;
-            } else if (gameString.charAt(i) == O) {
-                countO += 1;
-            }
-        }
-        return countX == countO;
-    }
-
-    public static boolean[][] areFieldsEmpty(GameController gameController) {
-        boolean[][] fields = new boolean[GRID_LENGTH][GRID_LENGTH];
-        for (int i = 0; isIndexInBounds(i); i++) {
-            for (int j = 0; isIndexInBounds(j); j++) {
-                fields[i][j] = gameController.isCellOccupied(i, j);
-            }
-        }
-        return fields;
-    }
-
-    public static int getNumberOfEmptyFields(GameController gameController) {
-        int number = 0;
-        boolean[][] fields = areFieldsEmpty(gameController);
-        for (int i = 0; isIndexInBounds(i); i++) {
-            for (int j = 0; isIndexInBounds(j); j++) {
-                if (!fields[i][j]) {
-                    number += 1;
-                }
-            }
-        }
-        return number;
-    }
-
-    public static boolean isIndexInBounds(int i) {
-        return i >= 0 && i < GRID_LENGTH;
-    }
-
-    public static char getOppositeSide(char side) {
-        if (side == X) {
-            return O;
-        }
-        return X;
     }
 
 }

@@ -12,17 +12,12 @@ public class Player implements AI {
 
     @Override
     public int[] move() {
-        return GameIO.processPlayerInput();
+        return GameIO.getCoordinates();
     }
 
     @Override
     public boolean isPlayer() {
         return player;
-    }
-
-    @Override
-    public String getMoveMessage() {
-        return "";
     }
 
 }

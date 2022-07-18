@@ -1,180 +1,87 @@
 package com.elitvinchuck.tictactoe.views;
 
-import com.elitvinchuck.tictactoe.ai.*;
+import com.elitvinchuck.tictactoe.Constants;
 import com.elitvinchuck.tictactoe.controllers.GameAIController;
 import com.elitvinchuck.tictactoe.controllers.GameController;
-import com.elitvinchuck.tictactoe.exceptions.TicTacToeException;
 
 import java.util.Scanner;
 
 public class GameIO {
 
-    public final static String EASY = "easy";
+    private static GameController gameController = GameController.getInstance();
 
-    public final static String MEDIUM = "medium";
-
-    public final static String HARD = "hard";
-
-    public final static String USER = "user";
-
-    private final GameController gameController;
-
-    private final GameAIController gameAIController;
-
-    public GameIO(String x, String o) {
-        this.gameController = new GameController();
-        this.gameAIController = new GameAIController(gameController, produceAI(x), produceAI(o));
+    public static void redraw() {
+        drawGameField();
+        System.out.println();
     }
 
-    public void printGameField() {
-        System.out.println("---------");
-        for (int i = 0; GameController.isIndexInBounds(i); i++) {
-            System.out.print("| ");
-            for (int j = 0; GameController.isIndexInBounds(j); j++) {
-                System.out.print(gameController.get(i, j));
-                System.out.print(' ');
+    public static void clearScreen() {
+        System.out.print("\033[H\033[2J");
+    }
+
+    private static void drawGameField() {
+        System.out.println("     1   2   3");
+        for (int i = 0; i < Constants.GRID_LENGTH; i++) {
+            System.out.printf("%d   ", i + 1);
+            for (int j = 0; j < Constants.GRID_LENGTH; j++) {
+                System.out.printf(" %c", gameController.get(i, j));
+                if (j != Constants.GRID_LENGTH - 1) {
+                    System.out.print(" |");
+                }
             }
-            System.out.print("|");
             System.out.println();
+            if (i != Constants.GRID_LENGTH - 1) {
+                System.out.println("    ---+---+---");
+            }
         }
-        System.out.println("---------");
     }
 
-    public void printGameState() {
-        if (gameAIController.isGameImpossible()) {
-            System.out.println("Impossible");
-        } else if (gameAIController.hasXWon()) {
+    public static void printGameState() {
+        if (gameController.hasXWon()) {
             System.out.println("X wins");
-        } else if (gameAIController.hasOWon()) {
+        } else if (gameController.hasOWon()) {
             System.out.println("O wins");
-        } else if (gameAIController.isDraw()) {
+        } else if (gameController.isDraw()) {
             System.out.println("Draw");
-        } else if (!gameAIController.isGameFinished()) {
+        } else if (!gameController.isGameFinished()) {
             System.out.println("Game not finished");
         }
     }
 
-    public void loop() {
-        while(!gameAIController.isGameFinished()) {
-            printGameField();
-            move();
-        }
-        printGameField();
-        printGameState();
-    }
-
-    private void move() {
-        try {
-            String message = gameAIController.getMoveMessage();
-            gameAIController.move();
-            if (!message.isEmpty()) {
-                System.out.println(message);
-            }
-        } catch (TicTacToeException e) {
-            if (gameAIController.isPlayerAI()) {
-                System.out.println(e.getMessage());
-            }
-            move();
-        }
-    }
-
-    private AI produceAI(String name) {
-        if (name.equals(EASY)) {
-            return new EasyAI(gameController);
-        } else if (name.equals(MEDIUM)) {
-            return new MediumAI(gameController);
-        } else if (name.equals(HARD)) {
-            return new HardAI(gameController);
-        } else {
-            return new Player();
-        }
-    }
-
-    public static int[] processPlayerInput() {
+    public static int[] getCoordinates() {
+        printPrompt(GameAIController.getInstance().getCurrentSide());
         Scanner scanner = new Scanner(System.in);
-        System.out.print("Enter the coordinates: ");
-        String[] coordinates = scanner.nextLine().split(" ");
-        int i;
-        int j;
+        String[] coordinates;
+        int i = 0;
+        int j = 0;
 
-        try {
-            i = Integer.parseInt(coordinates[0]);
-            j = Integer.parseInt(coordinates[1]);
-        } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
-            System.out.println("You should enter numbers!");
-            return processPlayerInput();
-        }
-
-        i -= 1;
-        j -= 1;
-
-        if (!GameController.isIndexInBounds(i) || !GameController.isIndexInBounds(j)) {
-            System.out.println("Coordinates should be from 1 to 3!");
-            return processPlayerInput();
-        }
-        return new int[] { i, j };
-    }
-
-    public static void printWelcome() {
-        System.out.println("Welcome to Tic-Tac-Toe!");
-        System.out.println("To start type: start player player");
-        System.out.println("where player is: ");
-        System.out.println("    user - human player");
-        System.out.println("    easy - easy ai");
-        System.out.println("    medium - medium ai");
-        System.out.println("    hard - hard ai");
-    }
-
-    public static void printSingleWelcome() {
-        System.out.println("Welcome to Tic-Tac-Toe!");
-    }
-
-    public static void getUserReturn() {
-        Scanner scanner = new Scanner(System.in);
-        scanner.nextLine();
-    }
-
-    public static String[] processStartCommands() {
-        Scanner scanner = new Scanner(System.in);
-        System.out.print("Input command: ");
-        String[] command = scanner.nextLine().split(" ");
-        if (!isCommandValid(command)) {
-            System.out.println("Bad parameters!");
-            return processStartCommands();
-        }
-        return command;
-    }
-
-    public static String processSingleUserStartCommands() {
-        Scanner scanner = new Scanner(System.in);
-        String parameter;
         do {
-            System.out.print("Choose difficulty (easy, medium, hard): ");
-            parameter = scanner.nextLine();
-            if (!isParameterValid(parameter)) {
-                System.out.println("Bad parameters!");
-                return processSingleUserStartCommands();
+            coordinates = scanner.nextLine().split(" ");
+            if (!areCoordinatesValid(coordinates)) {
+                System.out.println("Please enter a pair of coordinates (1-3) (1-3):");
+                continue;
             }
-        } while (!isParameterValid(parameter));
-        return parameter;
+
+            i = Integer.parseInt(coordinates[0]) - 1;
+            j = Integer.parseInt(coordinates[1]) - 1;
+            if (gameController.isCellOccupied(i, j)) {
+                System.out.println("Cell already occupied. Enter another one:");
+            }
+        }
+        while (!areCoordinatesValid(coordinates) || gameController.isCellOccupied(i, j));
+        return new int[] {i, j};
     }
 
-    public static boolean isSingleUser(String[] args) {
-        return args.length > 0 && args[0].equals("single");
+    private static boolean areCoordinatesValid(String[] coordinates) {
+        return coordinates.length == 2
+                && coordinates[0].matches("\\d+")
+                && coordinates[1].matches("\\d+")
+                && gameController.isIndexInBounds(Integer.parseInt(coordinates[0]) - 1)
+                && gameController.isIndexInBounds(Integer.parseInt(coordinates[1]) - 1);
     }
 
-    private static boolean isCommandValid(String[] command) {
-        return areParametersValid(command) || (command.length == 1 && command[0].equals("exit"));
-    }
-
-    private static boolean areParametersValid(String[] command) {
-        return command.length == 3
-                && isParameterValid(command[1])
-                && isParameterValid(command[2]);
-    }
-
-    private static boolean isParameterValid(String parameter) {
-        return parameter.equals(EASY) || parameter.equals(USER) || parameter.equals(MEDIUM) || parameter.equals(HARD);
+    private static void printPrompt(char side) {
+        System.out.printf("It's %c turn! Type a coordinate. Ex: 2 3:%n", side);
     }
 
 }
